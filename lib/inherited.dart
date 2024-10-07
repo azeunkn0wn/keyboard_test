@@ -3,18 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class KeyboardService extends InheritedWidget {
-  @override
-  final Widget child;
   final List<PhysicalKeyboardKey> pressed;
   final int pressedCount;
   final Map keymap;
   const KeyboardService(
-      {Key? key,
-      required this.child,
+      {super.key,
       required this.pressed,
       required this.pressedCount,
-      required this.keymap})
-      : super(key: key, child: child);
+      required this.keymap,
+      required super.child});
 
   static KeyboardService? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<KeyboardService>();

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 
+// ignore: must_be_immutable
 class MyKeyboardKey extends Equatable {
   final PhysicalKeyboardKey physicalKey;
   final Offset keyLocation;
@@ -13,13 +14,14 @@ class MyKeyboardKey extends Equatable {
 
   String? get label => physicalKey.debugName;
 
+  //! TODO: should not be in here
   bool _isPressed = false;
   void pressed() {
     _isPressed = true;
   }
 
   bool get isPressedDown =>
-      RawKeyboard.instance.physicalKeysPressed.contains(physicalKey);
+      HardwareKeyboard.instance.physicalKeysPressed.contains(physicalKey);
 
   Color get fillColor {
     Color active = const Color.fromARGB(255, 54, 117, 5);

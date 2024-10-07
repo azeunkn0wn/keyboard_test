@@ -33,7 +33,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String printKeyPress(value) {
-    String upOrDown = value.runtimeType == RawKeyDownEvent ? '↓' : '↑';
+    String upOrDown = value.runtimeType == HardwareKeyboard ? '↓' : '↑';
 
     final String output = '$upOrDown ${value.logicalKey.keyLabel}';
 
@@ -41,10 +41,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   late String keyPress;
-  late int pressedKeyCount;
+  late int uniqueKeyPressedCount;
   final TextEditingController _controller = TextEditingController();
 
-  Map pressedKey = {};
+  late Map<PhysicalKeyboardKey, int> pressedKey = {};
   List<PhysicalKeyboardKey> pressed = [];
   int pressedCount = 0;
   final _focusNode = FocusNode();
@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     keyPress = '';
-    pressedKeyCount = 0;
+    uniqueKeyPressedCount = 0;
     keymap = {};
     super.initState();
   }
@@ -64,51 +64,38 @@ class _MyHomePageState extends State<MyHomePage> {
       keymap: keymap,
       pressed: pressed,
       pressedCount: pressedCount,
-      child: RawKeyboardListener(
+      child: KeyboardListener(
         focusNode: _focusNode,
         autofocus: true,
-        onKey: (value) {
-          final int usbHidUsage = value.data.physicalKey.usbHidUsage;
-          final debugName = value.data.physicalKey.debugName;
-
-          Map map = {
-            value.data.physicalKey.usbHidUsage: {
-              'debugName': debugName,
-              'pressedCount': pressedCount
-            }
-          };
-
-          // if (value.runtimeType == RawKeyDownEvent) {
-          //   String pathName = ("path_${keymap.length + 1}");
-          //   Map keym = {
-          //     pathName: {'usbHidUsage': usbHidUsage, 'debugName': debugName},
-          //   };
-
-          //   keymap.addAll(keym);
-          //   print(keymap);
-          // }
-
-          pressedKey.addAll(map);
+        onKeyEvent: (value) {
+          // pressedKey.addAll(map);
 
           String keyString = '';
 
           pressedKey.forEach((key, value) {
-            keyString += '${value['debugName']} : ${value['pressedCount']}\n';
+            keyString += '${(key).debugName} : $value\n';
           });
 
           setState(() {
-            if (!pressed.contains(value.data.physicalKey)) {
-              pressed.add(value.data.physicalKey);
+            if (!pressed.contains(value.physicalKey)) {
+              pressed.add(value.physicalKey);
             }
 
-            pressedCount = pressedKey.containsKey(usbHidUsage)
-                ? (value.runtimeType == RawKeyDownEvent && !value.repeat
-                    ? pressedKey[usbHidUsage]['pressedCount'] + 1
-                    : pressedKey[usbHidUsage]['pressedCount'])
-                : 1;
+            if (value is KeyDownEvent) {
+              if (pressedKey.containsKey(value.physicalKey) &&
+                  pressedKey[value.physicalKey] != null) {
+                pressedKey[value.physicalKey] =
+                    pressedKey[value.physicalKey]! + 1;
+              } else {
+                pressedKey[value.physicalKey] = 1;
+              }
+
+              pressedCount += 1;
+            }
+
             keyPress = printKeyPress(value);
             _controller.text = keyString;
-            pressedKeyCount = pressedKey.length;
+            uniqueKeyPressedCount = pressedKey.length;
             _controller.selection =
                 TextSelection.collapsed(offset: _controller.text.length);
           });
@@ -142,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(keyPress),
-                          Text(pressedKeyCount.toString()),
+                          Text(uniqueKeyPressedCount.toString()),
                           ElevatedButton(
                             onPressed: () async {
                               // String result = jsonEncode(keymap);
